@@ -1,0 +1,42 @@
+name: Run Amazon Shipping Bot
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *"   # Runs every 1 hour
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Checkout PRIVATE repo via SSH
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ secrets.PRIVATE_REPO }}
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Script
+        env:
+          AMAZON_EMAIL: ${{ secrets.AMAZON_EMAIL }}
+          AMAZON_PASSWORD: ${{ secrets.AMAZON_PASSWORD }}
+          TOTP_SECRET: ${{ secrets.TOTP_SECRET }}
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          WORKSHEET_NAME: ${{ secrets.WORKSHEET_NAME }}
+          SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+        run: python amazon-shipping.py
+
+
